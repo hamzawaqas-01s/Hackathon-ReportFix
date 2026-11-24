@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Verify email · ReportFix{% endblock %}{% block content %}
+<div class="narrow">
+  <div class="eyebrow">CHECK YOUR INBOX</div>
+  <h1>Enter your sign-in code</h1>
+  <p class="muted">We sent a six-digit code to <b>{{ email }}</b>. The code expires in 10 minutes.</p>
+  <form method="post" class="stack">
+    <label for="code">Six-digit verification code</label>
+    <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" required>
+    <button class="primary" type="submit">Verify and sign in →</button>
+  </form>
+  <form method="get" action="{{ url_for('login') }}"><button class="secondary" type="submit">Use a different email</button></form>
+</div>{% endblock %}

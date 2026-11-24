@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}ReportFix{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}"></head>
+<body><header class="top"><a class="brand" href="/">Report<span>Fix</span></a><nav>
+{% if user %}<a href="{{ url_for('dashboard') }}">Dashboard</a>{% if user.role=='STUDENT' %}<a href="{{ url_for('report') }}">New report</a>{% endif %}<a href="{{ url_for('trust') }}">Trust score</a>{% if user.role=='ADMIN' %}<a href="{{ url_for('admin') }}">Admin</a>{% endif %}
+{% if judge_users %}<form method="post" action="{{url_for('demo_switch')}}" class="inline"><select name="user_id" aria-label="Switch demo user">{% for account in judge_users %}<option value="{{account.id}}" {% if account.id==user.id %}selected{% endif %}>{{account.display_name}} · {{account.role}}</option>{% endfor %}</select><button class="linkbtn">Switch</button></form>{% endif %}<span class="who">{{ user.display_name }} · {{ user.role }}{% if user.department %} / {{ user.department }}{% endif %}</span><form method="post" action="{{ url_for('logout') }}"><button class="linkbtn">Sign out</button></form>
+{% else %}<a href="{{ url_for('login') }}">Demo login</a>{% endif %}</nav></header>
+<main class="wrap">{% with messages=get_flashed_messages() %}{% if messages %}<div class="flash">{% for m in messages %}<div>{{m}}</div>{% endfor %}</div>{% endif %}{% endwith %}
+{% block content %}{% endblock %}</main><footer>ReportFix · Evidence-led campus issue resolution</footer></body></html>

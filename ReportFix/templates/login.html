@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}University sign-in · ReportFix{% endblock %}{% block content %}
+<div class="narrow">
+  <div class="eyebrow">UNIVERSITY EMAIL VERIFICATION</div>
+  <h1>Sign in to ReportFix</h1>
+  <p class="muted">Enter your university email. We will send a one-time code to verify that you own the address. You do not enter your university password here.</p>
+  <form method="post" class="stack">
+    <label for="email">University email</label>
+    <input id="email" name="email" type="email" placeholder="yourname@your-nust-domain" autocomplete="email" required>
+    <button class="primary" type="submit">Send verification code →</button>
+  </form>
+  {% if demo_enabled %}
+  <form method="post" action="{{ url_for('demo_login') }}" class="stack demo-student-entry">
+    <input type="hidden" name="username" value="demo_student">
+    <button class="secondary" type="submit">Continue as Demo Student</button>
+  </form>
+  <p class="muted small">Hackathon demo access: continue as a student without entering an email or password.</p>
+  {% endif %}
+  <p class="muted small">Accepted email domain(s): {{ email_domains|join(', ') }} (including subdomains)</p>
+  {% if demo_enabled %}
+  <details class="demo-panel"><summary>Hackathon staff / admin demo access</summary>
+    <p class="muted small">Use these shortcuts to test staff and administrator workflows. Student demo access is available above.</p>
+    {% for username,label in [('staff_ee','EE Staff'),('staff_cse','CSE Staff'),('staff_is','IS / Welfare Staff'),('staff_library','Library Staff'),('staff_cafeteria','Cafeteria Staff'),('staff_labs','Labs Staff'),('admin','Administrator')] %}
+    <form method="post" action="{{ url_for('demo_login') }}"><input type="hidden" name="username" value="{{ username }}"><button class="secondary" type="submit">Continue as {{ label }}</button></form>
+    {% endfor %}
+  </details>
+  {% endif %}
+</div>{% endblock %}

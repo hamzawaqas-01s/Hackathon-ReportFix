@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{item.code}} · ReportFix{% endblock %}
+{% block content %}
+<a class="back" href="{{url_for('dashboard')}}">← Dashboard</a>
+<div class="pagehead">
+  <div>
+    <div class="eyebrow">{{item.code}}</div>
+    <h1>{{item.title}}</h1>
+    <p class="muted">{{item.issue_type}} · {{item.location}} · {{item.department}}</p>
+  </div>
+  <span class="pill {{item.priority|lower}}">{{item.priority}}</span>
+</div>
+<div class="detailgrid">
+  <section class="panel">
+    <div class="issue-top">
+      <span class="status">{{item.status.replace('_',' ')}}</span>
+      <span>{{participants}} affected students</span>
+    </div>
+    <h3>Report details</h3>
+    <p class="description">{{item.description}}</p>
+    {% if item.resolution_note %}
+      <div class="notice"><b>Resolution note</b><br>{{item.resolution_note}}</div>
+    {% endif %}
+
+    {% if not item.confidential %}
+      <div class="notice">
+        <b>Community complaint verification</b>
+        <p><b>Genuine complaint:</b> {{existence_votes.get('EXISTS',0)}} votes · <b>Not genuine:</b> {{existence_votes.get('NOT_EXISTS',0)}} votes · <b>Total:</b> {{existence_votes.get('EXISTS',0) + existence_votes.get('NOT_EXISTS',0)}}</p>
+        <p><b>Verification result: {{verification_label}}</b></p>
+        {% if verification_state=='PENDING' %}
+          <p class="muted">A minimum of {{verification_min_votes}} student votes is required. A complaint becomes community-verified only when genuine votes outnumber not-genuine votes after that minimum is reached. A tie remains under review.</p>
+        {% elif verification_state=='VERIFIED' %}
+          <p class="muted">More students have confirmed this complaint as genuine than rejected it.</p>
+        {% else %}
+          <p class="muted">More students have rejected this complaint than confirmed it. Faculty/staff and admins can review it; it is not automatically deleted.</p>
+        {% endif %}
+
+        {% if user.role=='STUDENT' and item.status in ['OPEN','IN_PROGRESS'] and item.reporter_id != user.id %}
+          <p>As a student other than the reporter, cast one independent vote. You can change your vote while voting is open.</p>
+          <form class="inline" method="post" action="{{url_for('existence_vote',incident_id=item.id)}}">
+            <button class="btn {{'secondary' if my_existence_vote and my_existence_vote.vote_type=='EXISTS' else ''}}" name="vote_type" value="EXISTS">{% if my_existence_vote and my_existence_vote.vote_type=='EXISTS' %}✓ Voted: genuine{% else %}This is a genuine complaint{% endif %}</button>
+            <button class="btn danger {{'secondary' if my_existence_vote and my_existence_vote.vote_type=='NOT_EXISTS' else ''}}" name="vote_type" value="NOT_EXISTS">{% if my_existence_vote and my_existence_vote.vote_type=='NOT_EXISTS' %}✓ Voted: not genuine{% else %}This complaint is not genuine{% endif %}</button>
+          </form>
+        {% elif user.role=='STUDENT' and item.reporter_id == user.id %}
+          <p class="muted">You submitted this complaint, so you cannot vote on its genuineness. Other students provide the independent verification.</p>
+        {% endif %}
+      </div>
+
+      {% if user.role=='STUDENT' and not eligible %}
+        {% if verification_state=='VERIFIED' %}
+          <form method="post" action="{{url_for('join_incident',incident_id=item.id)}}"><button class="btn secondary">＋ Me too — join this verified issue</button></form>
+        {% else %}
+          <p class="muted">Joining and affected-student totals become available after community verification.</p>
+        {% endif %}
+      {% endif %}
+
+      {% if user.role=='STUDENT' and item.status=='RESOLVED' and eligible %}
+        <div class="notice">
+          <b>Did this fix the problem?</b>
+          <p>Only students who reported or joined this issue can confirm or dispute.</p>
+          <form class="inline" method="post" action="{{url_for('vote',incident_id=item.id)}}">
+            <button class="btn" name="vote_type" value="CONFIRM">Confirm resolved</button>
+            <button class="btn danger" name="vote_type" value="DISPUTE">Still not fixed</button>
+          </form>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="notice"><b>Restricted welfare / harassment report</b><p>This report is available only to authorized faculty/staff and administrators.</p></div>
+    {% endif %}
+
+    {% if can_manage %}
+      <hr>
+      <h3>Staff action</h3>
+      <form method="post" action="{{url_for('update_status',incident_id=item.id)}}" class="form">
+        <label>Update status
+          <select name="status">
+            <option value="IN_PROGRESS">In progress</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="OPEN">Reopen / Open</option>
+          </select>
+        </label>
+        <label>Mandatory resolution note when resolving<textarea name="note" rows="3" placeholder="Describe the repair or action taken"></textarea></label>
+        <button class="btn">Save update</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <aside class="panel">
+    <h3>Community response</h3>
+    <div class="big">{{participants}}</div>
+    <p class="muted">Unique affected students</p>
+    <p>Confirmations: <b>{{votes.get('CONFIRM',0)}}</b></p>
+    <p>Disputes: <b>{{votes.get('DISPUTE',0)}}</b></p>
+    <hr>
+    <h3>Activity timeline</h3>
+    {% for l in logs %}
+      <div class="timeline">
+        <b>{{l.action.replace('_',' ')}}</b>
+        <small>{{l.created_at[:19].replace('T',' ')}} · {{l.display_name}}</small>
+        <p>{{l.detail}}</p>
+      </div>
+    {% endfor %}
+  </aside>
+</div>
+{% endblock %}
